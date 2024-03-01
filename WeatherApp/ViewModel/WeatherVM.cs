@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using WeatherApp.Model;
@@ -46,9 +48,15 @@ namespace WeatherApp.ViewModel
             get { return selectedCity; }
             set
             {
-                selectedCity = value;
-                OnPropertyChanged ("SelectedCity");
-                GetCurrentConditions();
+                if ( selectedCity != value )
+                {
+                    selectedCity = value;
+                    OnPropertyChanged ("SelectedCity");
+                    if ( selectedCity != null )
+                    {
+                        GetCurrentConditions (selectedCity.Key);
+                    }
+                }
             }
         }
 
@@ -79,22 +87,27 @@ namespace WeatherApp.ViewModel
             Cities = new ObservableCollection<City> ();
         }
 
-        public async void GetCurrentConditions()
+        public async Task GetCurrentConditions ( string cityKey )
         {
-            Query = string.Empty;
-            Cities.Clear ();
-            CurrentConditions = await AccuWeatherHelper.GetCurrentConditions(SelectedCity.Key);
+            if ( string.IsNullOrWhiteSpace (cityKey) )
+            {
+                return;
+            }
+
+            CurrentConditions = await AccuWeatherHelper.GetCurrentConditions (cityKey);
         }
 
-        public async void MakeQuery()
+        public async Task MakeQuery ()
         {
-            var cities = await AccuWeatherHelper.GetCities(Query);
-
-            Cities.Clear ();
-
-            foreach (var city in cities)
+            if ( !string.IsNullOrWhiteSpace (Query) )
             {
-                Cities.Add (city);
+                Cities.Clear ();
+                var cities = await AccuWeatherHelper.GetCities (Query);
+
+                foreach ( var city in cities )
+                {
+                    Cities.Add (city);
+                }
             }
         }
 

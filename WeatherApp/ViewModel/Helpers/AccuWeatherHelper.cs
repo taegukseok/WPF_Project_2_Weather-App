@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -15,7 +16,7 @@ namespace WeatherApp.ViewModel.Helpers
         public const string BASE_URL = "http://dataservice.accuweather.com/";
         public const string AUTOCOMPLETE_ENDPOINT = "locations/v1/cities/autocomplete?apikey={0}&q={1}";
         public const string CURRENT_CONDITIONS_ENDPOINT = "currentconditions/v1/{0}?apikey={1}";       
-        public const string API_KEY = "g5Z8hJIuaXsitlqKEQAjSz4UrBYYYUU4";
+        public const string API_KEY = "Sx1OF3piASbTJyfXPVv0HJm65AWLnTV6";
 
         public static async Task<List<City>> GetCities(string query)
         {
@@ -26,9 +27,19 @@ namespace WeatherApp.ViewModel.Helpers
             using(HttpClient client = new())
             {
                 var response = await client.GetAsync (url);
-                string json = await response.Content.ReadAsStringAsync();
-
-                cities = JsonConvert.DeserializeObject<List<City>> (json);
+                if ( response.IsSuccessStatusCode )
+                {
+                    string json = await response.Content.ReadAsStringAsync ();
+                    cities = JsonConvert.DeserializeObject<List<City>> (json);
+                }
+                else if ( response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable )
+                {
+                    Debug.WriteLine ("API Service is unavailable. Please try again later.");
+                }
+                else
+                {
+                    Debug.WriteLine ($"API Error: {response.StatusCode}");
+                }
             }
 
             return cities;
